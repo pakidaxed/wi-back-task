@@ -13,7 +13,7 @@ class UserController extends Controller
 {
     private Request $request;
     private array $rules = [
-        'first_name' => "required|string|min:2|max:100",
+        'first_name' => "required|string|min:2|max:100", // probably should use regex for spaces and underscores
         'last_name' => "required|string|min:2|max:100",
         'email' => 'required|email|unique:users', // You can add DNS to email check, remove for faster testing
         'password' => 'required|string|min:5|max:40',
@@ -95,6 +95,7 @@ class UserController extends Controller
 
         return response()->json(
             [
+                'id' => $user->id,
                 'first_name' => $user->first_name,
                 'last_name' => $user->last_name,
                 'email' => $user->email,
