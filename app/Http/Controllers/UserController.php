@@ -3,68 +3,106 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\UserDetails;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Response;
 
 class UserController extends Controller
 {
+
+    private Request $request;
+    private array $rules = [
+        'first_name' => "required|string|min:2|max:100",
+        'last_name' => "required|string|min:2|max:100",
+        'email' => 'required|email|unique:users', // You can add DNS to email check, remove for faster testing
+        'password' => 'required|string|min:5|max:40',
+        'address' => 'string|nullable|max:255'
+    ];
+
+    public function __construct(Request $request)
+    {
+        $this->request = $request;
+    }
+
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return JsonResponse
      */
-    public function index()
+    public function index(): JsonResponse
     {
-        //
+        $users = User::all();
+
+        if ($users->count()) {
+            $usersResponse = null;
+
+            foreach ($users as $user)
+                $usersResponse[] = [
+                    'id' => $user->id,
+                    'first_name' => $user->first_name,
+                    'last_name' => $user->last_name,
+                    'email' => $user->email,
+                    'address' => $user->details->address ?? 'User has no address'
+                ];
+
+        }
+
+        return response()->json($usersResponse ?? 'No users in database');
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param \Illuminate\Http\Request $request
- * @return \Illuminate\Support\MessageBag
+     * @return JsonResponse
      */
-    public function store(Request $request, \Illuminate\Http\JsonResponse $response)
+    public function store(): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'first_name' => "required|string|min:2|max:100",
-            'last_name' => "required|string|min:2|max:100",
-            'email' => 'required|email|unique:users', // You can add DNS to email check, remove for faster testing
-            'password' => 'required|string|min:5|max:40',
-            'address' => 'string|nullable|max:255'
-        ]);
+        $validator = Validator::make($this->request->all(), $this->rules);
 
         if ($validator->fails()) {
-            return $validator->errors();
+            return response()->json($validator->errors(), 500);
         };
 
         $user = new User();
-        $user->first_name = $request->get('first_name');
-        $user->last_name = $request->get('last_name');
-        $user->email = $request->get('email');
-        $user->password = Hash::make($request->get('first_name'));
+        $user->first_name = $this->request->get('first_name');
+        $user->last_name = $this->request->get('last_name');
+        $user->email = $this->request->get('email');
+        $user->password = Hash::make($this->request->get('first_name'));
         $user->save();
 
-        if ($request->get('address'))
-            DB::table('user_details')->insert(['user_id' => $user->id, 'address' => $request->get('address')]);
+        // Adding users address to different table (this shouldn't be here)
+        if ($this->request->get('address')) {
+            $userDetails = new UserDetails();
+            $userDetails->user_id = $user->id;
+            $userDetails->address = $this->request->get('address');
+            $userDetails->timestamps = false;
+            $userDetails->save();
+        }
 
+        return response()->json('User created successfully', 201);
 
     }
 
     /**
      * Display the specified resource.
      *
-     * @param \App\Models\User $user
-     * @return \Illuminate\Http\Response
+     * @param $id
+     * @return JsonResponse
      */
-    public function show(User $user)
+    public function show($id): JsonResponse
     {
-        //
+        $user = User::findOrFail($id);
+
+        return response()->json(
+            [
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'email' => $user->email,
+                'address' => $user->details->address ?? 'User has no address'
+            ],
+        );
     }
 
     /**
@@ -74,7 +112,7 @@ class UserController extends Controller
      * @param \App\Models\User $user
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, User $user)
+    public function update(Request $request, $id): \Illuminate\Http\Response
     {
         //
     }
@@ -82,11 +120,14 @@ class UserController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param \App\Models\User $user
-     * @return \Illuminate\Http\Response
+     * @param $id
+     * @return JsonResponse
      */
-    public function destroy(User $user)
+    public function destroy($id): JsonResponse
     {
-        //
+
+        User::findOrFail($id)->delete();
+
+        return response()->json('User deleted successfully');
     }
 }

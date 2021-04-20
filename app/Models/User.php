@@ -32,4 +32,9 @@ class User extends Authenticatable
         'password',
     ];
 
+    public function details()
+    {
+        return $this->hasOne(UserDetails::class, 'user_id', 'id');
+    }
+
 }
