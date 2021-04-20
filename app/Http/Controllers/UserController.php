@@ -67,7 +67,7 @@ class UserController extends Controller
         $user->first_name = $this->request->get('first_name');
         $user->last_name = $this->request->get('last_name');
         $user->email = $this->request->get('email');
-        $user->password = Hash::make($this->request->get('first_name'));
+        $user->password = Hash::make($this->request->get('password'));
         $user->save();
 
         // Adding users address to different table (this shouldn't be here)
@@ -122,7 +122,7 @@ class UserController extends Controller
         $user->first_name = $this->request->get('first_name');
         $user->last_name = $this->request->get('last_name');
         $user->email = $this->request->get('email');
-        $user->password = Hash::make($this->request->get('first_name'));
+        $user->password = Hash::make($this->request->get('password'));
         $user->details->address = $this->request->get('address');
         $user->details->save();
         $user->save();
