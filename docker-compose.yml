@@ -1,0 +1,46 @@
+version: "3"
+
+networks:
+  wi-back-nginx-php8-alpine-mysql8:
+
+services:
+  nginx:
+    image: nginx:stable-alpine
+    container_name: wi-back-nginx
+    ports:
+    - "80:80"
+    volumes:
+    - ./:/var/www/html
+    - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - php
+      - mysql
+    networks:
+      - wi-back-nginx-php8-alpine-mysql8
+
+  php:
+    image: php:8-fpm-alpine
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wi-back-php8
+    volumes:
+    - ./:/var/www/html
+    ports:
+    - "9000:9000"
+    networks:
+      - wi-back-nginx-php8-alpine-mysql8
+
+  mysql:
+    image: mysql:8
+    container_name: wi-back-mysql8
+    restart: always
+    ports:
+    - "3306:3306"
+    volumes:
+    - ./mysql:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: main
+    networks:
+      - wi-back-nginx-php8-alpine-mysql8
