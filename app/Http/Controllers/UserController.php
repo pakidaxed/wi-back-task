@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
-
     private Request $request;
     private array $rules = [
         'first_name' => "required|string|min:2|max:100",
@@ -46,7 +45,6 @@ class UserController extends Controller
                     'email' => $user->email,
                     'address' => $user->details->address ?? 'User has no address'
                 ];
-
         }
 
         return response()->json($usersResponse ?? 'No users in database');
@@ -108,13 +106,27 @@ class UserController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param \Illuminate\Http\Request $request
-     * @param \App\Models\User $user
-     * @return \Illuminate\Http\Response
+     * @param $id
+     * @return JsonResponse
      */
-    public function update(Request $request, $id): \Illuminate\Http\Response
+    public function update($id): JsonResponse
     {
-        //
+        $validator = Validator::make($this->request->all(), $this->rules);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 500);
+        };
+
+        $user = User::findOrFail($id);
+        $user->first_name = $this->request->get('first_name');
+        $user->last_name = $this->request->get('last_name');
+        $user->email = $this->request->get('email');
+        $user->password = Hash::make($this->request->get('first_name'));
+        $user->details->address = $this->request->get('address');
+        $user->details->save();
+        $user->save();
+
+        return response()->json('User updated successfully', 201);
     }
 
     /**
@@ -125,7 +137,6 @@ class UserController extends Controller
      */
     public function destroy($id): JsonResponse
     {
-
         User::findOrFail($id)->delete();
 
         return response()->json('User deleted successfully');
