@@ -17,7 +17,6 @@ class CreateUserDetailsTable extends Migration
             $table->increments('id');
             $table->integer('user_id')->unsigned()->unique();
             $table->string('address');
-            $table->timestamps();
         });
     }
 

@@ -1,6 +1,6 @@
 <?php
 
-use Illuminate\Http\Request;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -14,6 +14,10 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
+Route::prefix('users')->group(function () {
+    Route::get('/', [UserController::class, 'index']);
+    Route::get('/show/{id}', [UserController::class, 'show']);
+    Route::post('/create', [UserController::class, 'store']);
+    Route::put('/update', [UserController::class, 'update']);
+    Route::delete('/delete/{id}', [UserController::class, 'destroy']);
 });
